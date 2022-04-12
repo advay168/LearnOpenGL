@@ -16,12 +16,19 @@ static unsigned int sizeOf(unsigned int gl_type) {
   }
 }
 
-VertexBuffer::VertexBuffer(Layout& layout, void* data, size_t size) {
+VertexBuffer::VertexBuffer(Layout& layout, void* data, size_t size)
+    : layout(layout) {
   glGenBuffers(1, &ID);
   Bind();
 
   glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+  setAttrib();
+  
+}
 
+void VertexBuffer::Bind() { glBindBuffer(GL_ARRAY_BUFFER, ID); }
+
+void VertexBuffer::setAttrib() {
   unsigned int stride = 0;
   for (int i = 0; i < layout.types.size(); i++) {
     stride += sizeOf(layout.types[i]) * layout.counts[i];
@@ -34,5 +41,3 @@ VertexBuffer::VertexBuffer(Layout& layout, void* data, size_t size) {
     cumalativeSize += sizeOf(layout.types[i]) * layout.counts[i];
   }
 }
-
-void VertexBuffer::Bind() { glBindBuffer(GL_ARRAY_BUFFER, ID); }

@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "VertexArray.h"
 #include "VertexBuffer.h"
 
 struct WindowData {
@@ -121,20 +122,27 @@ int main() {
       +0.5f, +0.5f, +0.5f, 1.0f, 0.0f, +0.5f, +0.5f, +0.5f, 1.0f, 0.0f,
       -0.5f, +0.5f, +0.5f, 0.0f, 0.0f, -0.5f, +0.5f, -0.5f, 0.0f, 1.0f};
 
-  unsigned int VAO;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
+  VertexArray VAO;
 
   Layout layout;
   layout.add(GL_FLOAT, 3, "aPos").add(GL_FLOAT, 2, "aTexCoord");
 
   VertexBuffer VBO(layout, vertices, sizeof(vertices));
 
-  Shader shader("res/shaders/basic.vert", "res/shaders/basic.frag");
+  // Shader shader("res/shaders/basic.vert", "res/shaders/basic.frag");
   Texture tex("res/textures/wall.jpg");
 
   Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
   windowData.camera = &camera;
+
+  VertexArray lightVAO;
+  VBO.Bind();
+  VBO.setAttrib();
+  Shader lightingShader("res/shaders/lighting.vert",
+                        "res/shaders/lighting.frag");
+  Shader lightCubeShader("res/shaders/lightCube.vert",
+                         "res/shaders/lightCube.frag");
+  glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -146,13 +154,12 @@ int main() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shader.use();
-    tex.Bind(0);
-    shader.set("tex", 0);
+    VAO.Bind();
+    // shader.Bind();
+    // tex.Bind(0);
+    // shader.set("tex", 0);
 
-    glm::mat4 model =
-        glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * glm::radians(50.0f),
-                    glm::vec3(0.5f, 1.0f, 0.0f));
+    glm::mat4 model = glm::mat4(1.0f);
 
     glm::mat4 view = camera.ComputeViewMatrix();
 
@@ -160,11 +167,28 @@ int main() {
         glm::radians(camera.m_zoom),
         float(windowData.width) / windowData.height, 0.1f, 100.0f);
 
-    shader.set<glm::mat4&>("model", model);
-    shader.set<glm::mat4&>("view", view);
-    shader.set<glm::mat4&>("projection", projection);
+    // shader.set<glm::mat4&>("model", model);
+    // shader.set<glm::mat4&>("view", view);
+    // shader.set<glm::mat4&>("projection", projection);
 
-    glBindVertexArray(VAO);
+    lightingShader.Bind();
+    lightingShader.setVec3("objectColor", {1.0f, 0.5f, 0.31f});
+    lightingShader.setVec3("lightColor", {1.0f, 1.0f, 1.0f});
+    lightingShader.set<glm::mat4&>("model", model);
+    lightingShader.set<glm::mat4&>("view", view);
+    lightingShader.set<glm::mat4&>("projection", projection);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+    lightCubeShader.Bind();
+    lightVAO.Bind();
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, lightPos);
+    model = glm::scale(model, glm::vec3(0.2f));
+    lightCubeShader.set<glm::mat4&>("model", model);
+    lightCubeShader.set<glm::mat4&>("view", view);
+    lightCubeShader.set<glm::mat4&>("projection", projection);
+
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glfwSwapBuffers(window);

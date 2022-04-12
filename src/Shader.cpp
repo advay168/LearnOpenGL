@@ -60,12 +60,12 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
     std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
               << infoLog << std::endl;
   }
-
+  std::cout << "Loaded shader: " << vertexPath << " and " << fragmentPath << std::endl;
   glDeleteShader(vertex);
   glDeleteShader(fragment);
 }
 
-void Shader::use() { glUseProgram(ID); }
+void Shader::Bind() { glUseProgram(ID); }
 
 template <>
 void Shader::set(const std::string& name, bool value) {
@@ -102,6 +102,10 @@ void Shader::setInt(const std::string& name, int value) {
 
 void Shader::setFloat(const std::string& name, float value) {
   glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+}
+
+void Shader::setVec3(const std::string& name, const glm::vec3& vec) {
+  glUniform3f(glGetUniformLocation(ID, name.c_str()), vec.x, vec.y, vec.z);
 }
 
 void Shader::setMat4(const std::string& name, const glm::mat4& mat) {
